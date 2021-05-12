@@ -29,14 +29,12 @@ class rv_discrete(rv):
         self.pk = values[1]
         self.name = name
 
-        self._lookup = dict()
-        for (x, p) in zip (self.xk, self.pk):
-            self._lookup[x] = p
-
-    # TODO: this does not work properly yet, bc lookup is not the right solution. 
 
     def pmf(self, X:np.ndarray) -> np.ndarray:
-        return np.array([self._lookup[(x,)] for x in X])
+        mask = self.xk == X
+        prob_matrix = mask * self.pk.reshape(-1,1) 
+        pmf = prob_matrix.sum(axis=0)
+        return pmf
     
     def score_samples(self, X:np.ndarray) -> np.ndarray:
         return np.log(self.pmf(X))
@@ -50,24 +48,25 @@ class rv_continuous(rv):
         return np.exp(self.kde.score_samples(x))
     
     def score_samples(self, X:np.ndarray) -> np.ndarray:
-        return self.pdf(X)
+        return self.kde.score_samples(X)
 
 def rv_from_discrete(x:np.ndarray, name:str=None) -> rv_discrete:
 
     df = pd.DataFrame(x)
-    pmf = df.value_counts(ascending=True, normalize=True)
+    pmf = df.value_counts(ascending=True, normalize=True, sort=False)
 
     name = name if name else "custom"
-    xk = pmf.index
+    xk = np.array([i for i in pmf.index.values])
     pk = pmf.values
+
     return rv_discrete(name=name, values=(xk,pk))
 
 
 
-def rv_from_continuous(x:np.ndarray, estimator:KernelDensity=None, name:str=None, params:dict={"bandwidth": np.logspace(-1,2,20)}) -> rv_continious:
+def rv_from_continuous(x:np.ndarray, estimator:KernelDensity=None, name:str=None, params:dict={"bandwidth": np.logspace(-1,1,20)}) -> rv_continuous:
     kde = None
     if estimator is None:
-        grid = GridSearchCV(KernelDensity(), params, verbose=4, n_jobs=-1)    
+        grid = GridSearchCV(KernelDensity(), params, verbose=1, n_jobs=-1)    
         grid.fit(x)
         kde = grid.best_estimator_
     
@@ -87,12 +86,9 @@ def prior_shift_discrete(y_s:np.ndarray, y_t:np.ndarray):
     pmf_t = rv_from_discrete(y_t)
 
 
-
     pd_s, pd_t = pmf_s.align(pmf_t, join="inner")
     return jsd(pd_s, pd_t)
 
-def make_pd_from_pdf(x:np.ndarray, pdf:KernelDensity) -> np.ndarray:
-    return pdf.score_samples(x)
 
 
 
