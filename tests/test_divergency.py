@@ -4,11 +4,13 @@ import os
 
 from numpy.core.numeric import array_equal
 from numpy.testing._private.utils import assert_array_equal
-from domainadaptation.divergence import rv_continuous, rv_from_continuous, rv_from_discrete, rv_discrete
+from domainadaptation.divergence import jsd, rv_continuous, rv_from_continuous, rv_from_discrete, rv_discrete
 import numpy as np
 import pandas as pd
 from numpy import random
 from sklearn.neighbors import KernelDensity
+from scipy.stats import entropy
+
 
 
 class TestRVDiscrete(unittest.TestCase):
@@ -29,13 +31,13 @@ class TestRVDiscrete(unittest.TestCase):
 
 
     def test_rv_xk_from_discrete(self):
-        """Fails if the labels, aka discrete values, are not correctly set.
+        """Fails if the labels xk, aka discrete values, are not correctly set.
         """
         xk = [[0],[1],[2]]
         self.assertTrue(np.array_equal(self.rv.xk, xk), f"rv.xk is {self.rv.xk}, but should be {xk}")
     
     def test_rv_pk_from_discrete(self):
-        """Fails if the probabilites for the discrete values are not correctly set.
+        """Fails if the probabilites pk for the discrete values are not correctly set.
         """
         pk = [5.0/10, 3.0/10, 2.0/10]
         self.assertTrue(np.array_equal(self.rv.pk, pk), f"rv.pk is {self.rv.pk}, but should be {pk}")
@@ -101,6 +103,7 @@ class TestRVContinuous(unittest.TestCase):
         self.assertEqual(self.kde, self.rv.kde)
         self.assertEqual(type(self.rv), rv_continuous)
 
+    @unittest.skip("Skipping grid search test")
     def test_rv_from_continuous_without_kde(self):
         """Fails if the result of the grid search is not as expected.
         """
@@ -110,11 +113,12 @@ class TestRVContinuous(unittest.TestCase):
         self.assertEqual(rv.kde.bandwidth, self.rv.kde.bandwidth)
 
     def test_pdf_scalar(self):
-        """Fails if the pdf of 0 deviates too much from the correct value pdf(0)=0.5.
+        """Fails if the pdf of 0 deviates too much from the correct value pdf(0)=0.3989.
         """
         # given a uniform distribution, we just want to make sure, that the 
-        pdf_of_0 = 0.5
-        self.assertAlmostEqual(self.rv.pdf([[0]]),pdf_of_0,delta=0.2)
+        pdf_of_0 = 0.3989
+        pdf = self.rv.pdf([[0]])
+        self.assertAlmostEqual(pdf,pdf_of_0,delta=0.03)
 
     def test_pdf_vector(self):
         # it works, believe me :) 
@@ -129,7 +133,41 @@ class TestRVContinuous(unittest.TestCase):
         self.assertTrue(np.array_equal(score_samples, log_pdf))
     
 
+class TestJSD(unittest.TestCase):
+
+    def test_entropy_equals_kl_divergence(self):
+        x = np.array([10,6,4])
+        y = np.array([4,10,6])
+
+        pd_x = x / x.sum()
+        pd_y = y / y.sum()
+
+        # KL definition
+        kl_xy = np.array([p_x * np.log(p_x/p_y) for p_x,p_y in zip(pd_x,pd_y)]).sum()
+        # Entropy from scipy
+        entropy_xy = entropy(pd_x,pd_y)
+
+        self.assertEqual(kl_xy, entropy_xy)
+
+
     
+    def test_jsd(self):
+        x = np.array([10,6,4])
+        y = np.array([4,10,6])
+
+        pd_x = x / x.sum()
+        pd_y = y / y.sum()
+
+        M = 1./2. * (pd_x + pd_y)
+        # M = [0.35, 0.4, 0.25]
+
+        target = 1./2. * entropy(pd_x, M) + 1./2. * entropy(pd_y, M)
+        jsd_xy = jsd(x,y)
+
+        self.assertEqual(jsd_xy, target)
+
+
+        
 
 
             
