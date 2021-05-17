@@ -1,4 +1,5 @@
-from typing import Tuple
+from operator import pos
+from typing import Tuple, List
 import numpy as np
 import pandas as pd
 from scipy.stats import entropy
@@ -11,7 +12,7 @@ from abc import ABC, abstractmethod
 class rv(ABC):
 
     @abstractmethod
-    def score_samples(self, X:np.ndarray) -> np.ndarray:
+    def score_samples(self, X:np.ndarray, **kwargs) -> np.ndarray:
         """Returns the log probabilities for sample X.
 
         Args:
@@ -119,6 +120,62 @@ class rv_continuous(rv):
     def score_samples(self, X:np.ndarray) -> np.ndarray:
         return self.kde.score_samples(X)
 
+class rv_conditional(rv):
+    def __init__(self, posterior:rv, prior:rv, joint:rv) -> None:
+        self.posterior = posterior
+        self.prior = prior
+        self.joint = joint
+        
+    
+    def score_samples(self, X:np.ndarray, y:np.ndarray) -> np.ndarray:
+        """Returns the log probability of samples X given y. 
+
+        Args:
+            X (np.ndarray): posterior (sample)
+            y (np.ndarray): prior (given)
+
+        Returns:
+            np.ndarray: Log probability of p(X|y)
+        """
+        xy = np.hstack(X, y)
+        p_xy = self.joint.score_samples(xy)
+        p_y = self.prior.score_samples(y)
+
+        # p(x|y) = p(x and y) / p(y) <=> log(p(x|y)) = log(p(x and y)) - log(p(y))
+        return p_xy - p_y
+
+class rv_mixed_joint(rv):
+    def __init__(self, rv1:rv_continuous, rv2:rv_discrete, cond_kdes:dict=None) -> None:
+        self.rv1 = rv1
+        self.rv2 = rv2
+
+        keys = np.array([[key] for key in cond_kdes.keys()])
+        if not np.array_equal(keys, rv2.xk):
+            raise KeyError("Keys of cond_kdes must be identical to possible values for rv2, i.e. rv2.xk.")
+        self.cond_kdes = cond_kdes
+
+    def pdf(self, x:np.ndarray, y:np.ndarray): 
+        result = np.empty(shape=x.shape[0])
+        for label in np.unique(y):
+            result[y == label] = self.cond_kdes[label].score_samples(x[y == label])
+
+        return np.exp(result)         
+        
+    def score_samples(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
+        return np.log(self.pdf(X,y))
+
+
+        
+
+        
+
+
+
+
+
+
+        
+
 def rv_from_discrete(x:np.ndarray, name:str=None) -> rv_discrete:
     """Create a random variable (rv_discrete) instance from x. 
     X must contain realizations of a discrete random variable.
@@ -130,11 +187,10 @@ def rv_from_discrete(x:np.ndarray, name:str=None) -> rv_discrete:
     Returns:
         rv_discrete: Random variable 
     """
+    name = name 
 
     df = pd.DataFrame(x)
     pmf = df.value_counts(ascending=True, normalize=True, sort=False)
-
-    name = name if name else "custom"
     xk = np.array([i for i in pmf.index.values])
     pk = pmf.values
 
@@ -185,7 +241,7 @@ def jsd_from_continuous(rv_x: rv_continuous, rv_y: rv_continuous, eval_pts:int=1
     x_min = rv_x.a 
     y_min = rv_y.a
     x_max = rv_x.b
-    y_max = rv_x.b 
+    y_max = rv_y.b 
 
     if True in np.isinf([x_min,y_min,x_max,y_max]):
         raise ValueError("Lower and upper bounds for rv_x, rv_y must not contain infinity. Set explicit limits via rv_x.set_a() and rv_x.set_b().")
@@ -202,6 +258,10 @@ def jsd_from_continuous(rv_x: rv_continuous, rv_y: rv_continuous, eval_pts:int=1
     pd_y = rv_y.score_samples(mc_points)
 
     return jsd(pd_x, pd_y)
+
+
+
+
 
 
 

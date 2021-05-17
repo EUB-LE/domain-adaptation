@@ -3,8 +3,8 @@ import sys
 import os
 
 from numpy.core.numeric import array_equal
-from numpy.testing._private.utils import assert_array_equal
-from domainadaptation.divergence import jsd, rv_continuous, rv_from_continuous, rv_from_discrete, rv_discrete
+from numpy.testing._private.utils import assert_array_equal, assert_equal
+from domainadaptation.divergence import jsd, rv_conditional, rv_continuous, rv_from_continuous, rv_from_discrete, rv_discrete, rv_mixed_joint
 import numpy as np
 import pandas as pd
 from numpy import random
@@ -35,6 +35,14 @@ class TestRVDiscrete(unittest.TestCase):
         """
         xk = [[0],[1],[2]]
         self.assertTrue(np.array_equal(self.rv.xk, xk), f"rv.xk is {self.rv.xk}, but should be {xk}")
+    
+    def test_rv_xk_vector_from_discrete(self):
+        """Support multiple discrete dimensions
+        """
+        xk = [(0,1),(1,0),(1,1)]
+        x = [[0,1],[1,0],[1,0],[1,1]]
+        rv = rv_from_discrete(x)
+        self.assertTrue(np.array_equal(rv.xk,xk))
     
     def test_rv_pk_from_discrete(self):
         """Fails if the probabilites pk for the discrete values are not correctly set.
@@ -131,6 +139,42 @@ class TestRVContinuous(unittest.TestCase):
         score_samples = self.rv.score_samples(x)
 
         self.assertTrue(np.array_equal(score_samples, log_pdf))
+
+class TestRVMixedJoint(unittest.TestCase):
+
+    kde = None
+    kde0 = None
+    kde1 = None
+    X = None
+    y = None
+
+    
+    @classmethod
+    def setUpClass(cls):
+        """Construct Kernel Density Estimation with predetermined bandwidth 0.3 
+        from standard normal distribution.
+        """
+        cls.X = random.standard_normal(size=(1000,100))
+        cls.y = random.randint(3,size=(1000))
+        cls.kde = KernelDensity(bandwidth=0.3).fit(cls.X)
+        cls.kde0 = KernelDensity(bandwidth=0.3).fit(cls.X[cls.y == 0])
+        cls.kde1 = KernelDensity(bandwidth=0.3).fit(cls.X[cls.y == 1])
+        cls.kde2 = KernelDensity(bandwidth=0.3).fit(cls.X[cls.y == 2])
+
+    def setUp(self):
+        self.rv1 = rv_continuous(self.kde)
+        self.rv2 = rv_from_discrete(self.y)
+        cond_kdes = {0: self.kde0, 1: self.kde1, 2:self.kde2}
+        self.rv = rv_mixed_joint(self.rv1, self.rv2, cond_kdes)
+    
+    def test_rv_mixed_joint(self):
+        self.assertEqual(type(self.rv), rv_mixed_joint)
+    
+    def test_pdf(self):
+        result = self.rv.pdf(self.X, self.y)
+        self.assertTrue(True)
+
+
     
 
 class TestJSD(unittest.TestCase):
@@ -165,6 +209,9 @@ class TestJSD(unittest.TestCase):
         jsd_xy = jsd(x,y)
 
         self.assertEqual(jsd_xy, target)
+    
+
+        
 
 
         
