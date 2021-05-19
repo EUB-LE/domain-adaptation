@@ -3,8 +3,7 @@ import sys
 import os
 
 from numpy.core.numeric import array_equal
-from numpy.testing._private.utils import assert_array_equal, assert_equal
-from domainadaptation.divergence import jsd, rv_conditional, rv_continuous, rv_from_continuous, rv_from_discrete, rv_discrete, rv_mixed_joint
+from domainadaptation.divergence import jsd, rv_continuous, rv_from_continuous, rv_from_discrete, rv_discrete, rv_mixed_joint
 import numpy as np
 import pandas as pd
 from numpy import random
@@ -39,10 +38,13 @@ class TestRVDiscrete(unittest.TestCase):
     def test_rv_xk_vector_from_discrete(self):
         """Support multiple discrete dimensions
         """
+        x = [(0,1),(1,0),(1,0),(1,1)]
         xk = [(0,1),(1,0),(1,1)]
-        x = [[0,1],[1,0],[1,0],[1,1]]
+        xk_out = np.empty(len(xk), dtype=object)
+        xk_out[:] = xk
+      
         rv = rv_from_discrete(x)
-        self.assertTrue(np.array_equal(rv.xk,xk))
+        self.assertTrue(np.array_equal(rv.xk,xk_out))
     
     def test_rv_pk_from_discrete(self):
         """Fails if the probabilites pk for the discrete values are not correctly set.
@@ -140,6 +142,7 @@ class TestRVContinuous(unittest.TestCase):
 
         self.assertTrue(np.array_equal(score_samples, log_pdf))
 
+
 class TestRVMixedJoint(unittest.TestCase):
 
     kde = None
@@ -151,9 +154,7 @@ class TestRVMixedJoint(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        """Construct Kernel Density Estimation with predetermined bandwidth 0.3 
-        from standard normal distribution.
-        """
+       
         cls.X = random.standard_normal(size=(1000,100))
         cls.y = random.randint(3,size=(1000))
         cls.kde = KernelDensity(bandwidth=0.3).fit(cls.X)
@@ -164,8 +165,26 @@ class TestRVMixedJoint(unittest.TestCase):
     def setUp(self):
         self.rv1 = rv_continuous(self.kde)
         self.rv2 = rv_from_discrete(self.y)
-        cond_kdes = {0: self.kde0, 1: self.kde1, 2:self.kde2}
+        cond_kdes = {(0,): self.kde0, (1,): self.kde1, (2,):self.kde2}
         self.rv = rv_mixed_joint(self.rv1, self.rv2, cond_kdes)
+    
+    def tearDown(self):
+        del self.rv1
+        del self.rv2
+        del self.rv
+    
+    def test_get_kde_from_list(self):
+        self.rv.cond_kdes = {(0,1): KernelDensity(bandwidth=2.0), (1,): KernelDensity(bandwidth=1.0)}
+        kde01 = self.rv._get_cond_kde([0,1])
+        kde1 = self.rv._get_cond_kde([1])
+        self.assertEqual(kde01, self.rv.cond_kdes[(0,1)])
+        self.assertEqual(kde1, self.rv.cond_kdes[(1,)])
+    
+    def test_get_kde_from_scalar(self):
+         self.rv.cond_kdes = {(0,): KernelDensity(bandwidth=2.0), (1,): KernelDensity(bandwidth=1.0)}
+         kde = self.rv._get_cond_kde(1)
+         self.assertEqual(kde, self.rv.cond_kdes[(1,)])
+        
     
     def test_rv_mixed_joint(self):
         self.assertEqual(type(self.rv), rv_mixed_joint)
@@ -210,26 +229,6 @@ class TestJSD(unittest.TestCase):
 
         self.assertEqual(jsd_xy, target)
     
-
-        
-
-
-        
-
-
-            
-
-
-
-        
-        
-
-        
-
-
-        
-
-
-    
+          
 if __name__ == '__main__':
     unittest.main()

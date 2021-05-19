@@ -1,76 +1,91 @@
 from operator import pos
-from typing import Tuple, List
+from typing import Tuple, List, Union
 import numpy as np
 import pandas as pd
 from scipy.stats import entropy
 from sklearn.base import clone
-from sklearn.base import BaseEstimator 
+from sklearn.base import BaseEstimator
 from sklearn.neighbors import KernelDensity
 from sklearn.model_selection import GridSearchCV
 from abc import ABC, abstractmethod
 
+
 class rv(ABC):
 
     @abstractmethod
-    def score_samples(self, X:np.ndarray, **kwargs) -> np.ndarray:
+    def score_samples(self, X: np.ndarray, **kwargs) -> np.ndarray:
         """Returns the log probabilities for sample X.
 
         Args:
-            X (np.ndarray): sample 
+            X (np.ndarray): sample
 
         Returns:
-            np.ndarray: log probabilities 
+            np.ndarray: log probabilities
         """
         pass
 
 
 class rv_discrete(rv):
-    def __init__(self, values:Tuple[Tuple, np.ndarray], name:str=None) -> None:
+    def __init__(self, values: Tuple[Tuple, np.ndarray], name: str = None) -> None:
         self.xk = values[0]
         self.pk = values[1]
+        
+        pmf_dict = {}
+        for i in range(0, len(self.xk)):
+            pmf_dict[self.xk[i]] = self.pk[i]
+        
+        self.pmf_dict = pmf_dict
         self.name = name
 
-
-    def pmf(self, X:np.ndarray) -> np.ndarray:
-        """Returns the probability mass function at X. 
+    def pmf(self, X: np.ndarray) -> np.ndarray:
+        """Returns the probability mass function at X.
 
         Args:
-            X (np.ndarray): Scalar or vector 
+            X (np.ndarray): Scalar or vector
 
         Returns:
             np.ndarray: 1-D array of probabilities
         """
-        mask = self.xk == X
-        prob_matrix = mask * self.pk.reshape(-1,1) 
-        pmf = prob_matrix.sum(axis=0)
-        return pmf
-    
+
+        #TODO implement multidimensional adaptation. This requires a rework.
+        # mask = self.xk == X
+        # prob_matrix = mask * self.pk.reshape(-1, 1)
+        # pmf = prob_matrix.sum(axis=0)
+        # return pmf
+
+        # TODO implement 0 for values that are not present
+
+        return np.array([self.pmf_dict[i] for i in X])
+
     # implemenent abstract method(s)
-    def score_samples(self, X:np.ndarray) -> np.ndarray:
+    def score_samples(self, X: np.ndarray) -> np.ndarray:
         return np.log(self.pmf(X))
 
+
 class rv_continuous(rv):
-    def __init__(self, kde:KernelDensity, a:np.ndarray = -np.inf, b:np.ndarray = np.inf, name:str=None ) -> None:
+    def __init__(self, kde: KernelDensity, a: np.ndarray = -np.inf, b: np.ndarray = np.inf, name: str = None) -> None:
         self.kde = kde
         self.name = name
         self.dim = kde.sample().reshape(-1,).shape
-        
+
         if np.ndim(a) == 0:
             self.a = np.full((self.dim), a)
-        elif a.shape  == self.dim:
+        elif a.shape == self.dim:
             self.a = a
         else:
-            raise ValueError(f"Lower bound of support (a) must be scalar or {self.dim}" )
-        
+            raise ValueError(
+                f"Lower bound of support (a) must be scalar or {self.dim}")
+
         if np.ndim(b) == 0:
             self.b = np.full((self.dim), b)
         elif a.shape == self.dim:
             self.b = b
         else:
-            raise ValueError(f"Upper bound of support (b) must be scalar or {self.dim}" )
-    
-    def set_a(self, a:np.ndarray):
-        """Set lower bound for support of RV. 
+            raise ValueError(
+                f"Upper bound of support (b) must be scalar or {self.dim}")
+
+    def set_a(self, a: np.ndarray):
+        """Set lower bound for support of RV.
 
         Args:
             a (np.ndarray): lower bound, must be scalar or vector
@@ -80,14 +95,14 @@ class rv_continuous(rv):
         """
         if np.ndim(a) == 0:
             self.a = np.full((self.dim), a)
-        elif a.shape  == self.dim:
+        elif a.shape == self.dim:
             self.a = a
         else:
-            raise ValueError(f"Lower bound of support (a) must be scalar or {self.dim}" )
-    
-    
-    def set_b(self, b:np.ndarray):
-        """Set upper bound for support of RV. 
+            raise ValueError(
+                f"Lower bound of support (a) must be scalar or {self.dim}")
+
+    def set_b(self, b: np.ndarray):
+        """Set upper bound for support of RV.
 
         Args:
             b (np.ndarray): upper bound, must be scalar or vector
@@ -100,13 +115,11 @@ class rv_continuous(rv):
         elif b.shape == self.dim:
             self.b = b
         else:
-            raise ValueError(f"Upper bound of support (b) must be scalar or {self.dim}" )
+            raise ValueError(
+                f"Upper bound of support (b) must be scalar or {self.dim}")
 
-
-
-
-    def pdf(self, x:np.ndarray) -> np.ndarray:
-        """Returns the probability density function at x. 
+    def pdf(self, x: np.ndarray) -> np.ndarray:
+        """Returns the probability density function at x.
 
         Args:
             x (np.ndarray): scalar or vector
@@ -115,66 +128,47 @@ class rv_continuous(rv):
             np.ndarray: 1-D array of probabilities
         """
         return np.exp(self.kde.score_samples(x))
-    
-    #implement abstract method(s)
-    def score_samples(self, X:np.ndarray) -> np.ndarray:
+
+    # implement abstract method(s)
+    def score_samples(self, X: np.ndarray) -> np.ndarray:
         return self.kde.score_samples(X)
 
-class rv_conditional(rv):
-    def __init__(self, posterior:rv, prior:rv, joint:rv) -> None:
-        self.posterior = posterior
-        self.prior = prior
-        self.joint = joint
-        
-    
-    def score_samples(self, X:np.ndarray, y:np.ndarray) -> np.ndarray:
-        """Returns the log probability of samples X given y. 
-
-        Args:
-            X (np.ndarray): posterior (sample)
-            y (np.ndarray): prior (given)
-
-        Returns:
-            np.ndarray: Log probability of p(X|y)
-        """
-        xy = np.hstack(X, y)
-        p_xy = self.joint.score_samples(xy)
-        p_y = self.prior.score_samples(y)
-
-        # p(x|y) = p(x and y) / p(y) <=> log(p(x|y)) = log(p(x and y)) - log(p(y))
-        return p_xy - p_y
 
 class rv_mixed_joint(rv):
-    def __init__(self, rv1:rv_continuous, rv2:rv_discrete, cond_kdes:dict=None) -> None:
+    def __init__(self, rv1: rv_continuous, rv2: rv_discrete, cond_kdes: dict = None, name:str = None) -> None:
         self.rv1 = rv1
         self.rv2 = rv2
+        self.name = name
 
-        keys = np.array([[key] for key in cond_kdes.keys()])
+        keys = np.array([key for key in cond_kdes.keys()])
         if not np.array_equal(keys, rv2.xk):
-            raise KeyError("Keys of cond_kdes must be identical to possible values for rv2, i.e. rv2.xk.")
+            raise KeyError(
+                "Keys of cond_kdes must be identical to possible values for rv2, i.e. rv2.xk.")
         self.cond_kdes = cond_kdes
+
+    def _get_cond_kde(self, key: Union[tuple, np.ndarray, list]) -> KernelDensity:
+        # try to use np if key is not already iterable
+        try:
+            iter(key)
+        except TypeError:
+            key = [key]
+
+        # cast iterable key to tuple
+        if type(key) is not tuple:
+            key = tuple(key)
+
+        return self.cond_kdes[key]
 
     def pdf(self, x:np.ndarray, y:np.ndarray): 
         result = np.empty(shape=x.shape[0])
-        for label in np.unique(y):
-            result[y == label] = self.cond_kdes[label].score_samples(x[y == label])
-
+        for label in np.unique(y, axis=0):
+            kde = self._get_cond_kde(label)
+            result[y == label] = kde.score_samples(x[y == label])
         return np.exp(result)         
         
     def score_samples(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
         return np.log(self.pdf(X,y))
 
-
-        
-
-        
-
-
-
-
-
-
-        
 
 def rv_from_discrete(x:np.ndarray, name:str=None) -> rv_discrete:
     """Create a random variable (rv_discrete) instance from x. 
@@ -191,7 +185,7 @@ def rv_from_discrete(x:np.ndarray, name:str=None) -> rv_discrete:
 
     df = pd.DataFrame(x)
     pmf = df.value_counts(ascending=True, normalize=True, sort=False)
-    xk = np.array([i for i in pmf.index.values])
+    xk = pmf.index.values
     pk = pmf.values
 
     return rv_discrete(name=name, values=(xk,pk))
@@ -221,6 +215,36 @@ def rv_from_continuous(x:np.ndarray, estimator:KernelDensity=None, name:str=None
         kde = estimator
         
     return rv_continuous(kde, name)
+
+def rv_from_joint(x:np.ndarray, y:np.ndarray, rv_x:rv, rv_y:rv, name:str=None, params:dict={"bandwidth": np.logspace(-1,1,20)}) -> rv:
+    if rv_x.pmf is not None and rv_x.pmf is not None:
+        xy = np.hstack((x,y))
+        return rv_from_discrete(xy, name)
+
+    elif type(rv_x) is rv_continuous and type(rv_y) is rv_continuous: 
+        xy = np.hstack((x,y))
+        return rv_from_continuous(xy, name=name)
+    
+    elif type(rv_x) is rv_discrete and type(rv_y) is rv_continuous:
+        raise ValueError("If two RVs have different types, the continuous RV must be at position x, rv_x.")
+    
+    else:
+
+        cond_kdes = {} 
+        labels = pd.DataFrame(y).value_counts(ascending=True, normalize=True, sort=False).index.values
+        print(f"Fitting KDEs for every label in {labels}. This may take a while. Consider saving the cond_kdes and using the direct constructor of rv_mixed_joint to save time.")
+        for label in labels: 
+            sample = x[y == label]
+            grid = GridSearchCV(KernelDensity(), params, verbose=1, n_jobs=-1)    
+            grid.fit(sample)
+            cond_kdes[label] = grid.best_estimator_
+    
+        return rv_mixed_joint(rv_x, rv_y, cond_kdes, name)
+
+
+    
+
+
 
 
 def jsd(pd_x: np.ndarray, pd_y:np.ndarray) -> float:
