@@ -1,9 +1,11 @@
+from __future__ import annotations
 import numpy as np
 from numpy.lib import Arrayterator
 from domainadaptation.stats import rv_continuous, rv_discrete
 from sklearn.neighbors import KernelDensity
-from typing import Union
 import numpy.typing as npt
+from domainadaptation.helper._coverage import common_coverage_of_mixed_rvs
+
 
 
 class rv_mixed():
@@ -13,10 +15,16 @@ class rv_mixed():
         self.name = name
 
         keys = np.array([key for key in cond_kdes.keys()])
+
+        """
+        TODO: adapt check here to deal with tuple <-> array conversion for numpy.array_equal
+
         if not np.array_equal(keys, rv2.xk):
             raise KeyError(
                 "Keys of cond_kdes must be identical to possible values for rv2, i.e. rv2.xk.")
+        """
         self.cond_kdes = cond_kdes
+        
 
     def _get_cond_kde(self, key:npt.ArrayLike) -> KernelDensity:
         # cast to single-item list if not already iterable
@@ -34,6 +42,8 @@ class rv_mixed():
     def pdf_given_y(self, x:npt.ArrayLike, y:npt.ArrayLike) -> np.ndarray: 
         x = np.array(x)
         y = np.array(y)
+        if y.ndim == 2 or y.ndim == 0:
+            y = y.reshape(-1)
         
         p_x_given_y = np.empty(shape=x.shape[0])
 
@@ -65,3 +75,4 @@ class rv_mixed():
         
     def score_samples(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
         return np.log(self.pdf(X,y))
+

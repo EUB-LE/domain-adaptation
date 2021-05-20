@@ -1,6 +1,7 @@
+from __future__ import annotations
 import numpy as np
 import numpy.typing as npt
-from domainadaptation.divergence import kld, rv_discrete
+from domainadaptation.measures import kld, rv_discrete
 
 def jsd(pd_x: npt.ArrayLike, pd_y:npt.ArrayLike) -> float:
     pd_x = np.array(pd_x)

@@ -93,7 +93,8 @@ class TestRVDiscrete(unittest.TestCase):
         
         self.assertTrue(np.array_equal(score_is, score_target), f"P_is: {score_is} is not P_target: {score_target}.")
     
-
+if __name__ == '__main__':
+    unittest.main()
 
 
     

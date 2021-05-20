@@ -1,5 +1,7 @@
+from __future__ import annotations
 import numpy as np
 import numpy.typing as npt
+from domainadaptation.helper._coverage import common_coverage_of_discrete_rvs
 
 
 
@@ -46,7 +48,6 @@ class rv_discrete():
     
     def score_samples(self, X:npt.ArrayLike) -> np.ndarray:
         return np.log(self.pmf(X))
-
 
 
 

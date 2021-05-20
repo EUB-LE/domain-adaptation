@@ -34,7 +34,7 @@ class TestRVMixed(unittest.TestCase):
     
 
     def test_get_cond_kdes_from_scalar(self):
-        rv_x = rv_continuous(self.kde)
+        rv_x = rv_continuous(self.kde, (2,))
         rv_y = rv_discrete(xk=[(0,), (1,)], pk=[.5, .5])
 
         cond_kdes = {(0,): KernelDensity(bandwidth=1.0), (1,): KernelDensity(bandwidth=99.0)}
@@ -46,7 +46,7 @@ class TestRVMixed(unittest.TestCase):
         self.assertEqual(kde_is, kde_target)
     
     def test_get_cond_kdes_from_array(self): 
-        rv_x = rv_continuous(self.kde)
+        rv_x = rv_continuous(self.kde, (2,))
         rv_y = rv_discrete(xk=[(0,0), (1,0)], pk=[.5, .5])
 
         cond_kdes = {(0,0): KernelDensity(bandwidth=1.0), (1,0): KernelDensity(bandwidth=99.0)}
@@ -58,7 +58,7 @@ class TestRVMixed(unittest.TestCase):
         self.assertEqual(kde_is, kde_target)
     
     def test_get_cond_kdes_from_tuple(self): 
-        rv_x = rv_continuous(self.kde)
+        rv_x = rv_continuous(self.kde,(2,))
         rv_y = rv_discrete(xk=[(0,0), (1,0)], pk=[.5, .5])
 
         cond_kdes = {(0,0): KernelDensity(bandwidth=1.0), (1,0): KernelDensity(bandwidth=99.0)}
@@ -70,7 +70,7 @@ class TestRVMixed(unittest.TestCase):
         self.assertEqual(kde_is, kde_target)
     
     def test_get_cond_kdes_wrong_key(self):
-        rv_x = rv_continuous(self.kde)
+        rv_x = rv_continuous(self.kde, (2,))
         rv_y = rv_discrete(xk=[(0,), (1,)], pk=[.5, .5])
 
         cond_kdes = {(0,): KernelDensity(bandwidth=1.0), (1,): KernelDensity(bandwidth=99.0)}
@@ -80,7 +80,7 @@ class TestRVMixed(unittest.TestCase):
             kde_is = rv._get_cond_kde(3)
     
     def test_pdf_for_1d_discrete(self):
-        rv_x = rv_continuous(self.kde)
+        rv_x = rv_continuous(self.kde,(2,))
         rv_y = rv_discrete(xk=[(0,), (1,)], pk=[.5, .5])
 
         cond_kdes = {(0,): self.kde0, (1,): self.kde1}
@@ -94,7 +94,7 @@ class TestRVMixed(unittest.TestCase):
         self.assertTrue(is_close.all(), f"P_is: {P_is} is not close enough to P_target: {P_target}. ")
     
     def test_pdf_for_invalid_discrete(self):
-        rv_x = rv_continuous(self.kde)
+        rv_x = rv_continuous(self.kde, (2,))
         rv_y = rv_discrete(xk=[(0,), (1,)], pk=[.5, .5], badvalue=0)
 
         cond_kdes = {(0,): self.kde0, (1,): self.kde1}
@@ -109,7 +109,7 @@ class TestRVMixed(unittest.TestCase):
 
     @unittest.skip("No support for multidimensional discrete variables at the moment.")
     def test_pdf_for_2d_discrete(self):
-        rv_x = rv_continuous(self.kde)
+        rv_x = rv_continuous(self.kde, (2,))
         
         # 2d discrete (0,0) if for (x1,x2) : x1 < 0 and x2 < 0, (1,0) if x1 >= 0 and x2 < 0 and so on.
         y0 = np.apply_along_axis(lambda x: 1 if x[0] >= 0 else 0, 1, self.X)
@@ -122,7 +122,8 @@ class TestRVMixed(unittest.TestCase):
         # and not in [True, False] as required for this use case in order to use the result as a selection for X and train KDEs. 
         pass
 
-
+if __name__ == '__main__':
+    unittest.main()
     
 
 
