@@ -4,7 +4,6 @@ from numpy.lib import Arrayterator
 from domainadaptation.stats import rv_continuous, rv_discrete
 from sklearn.neighbors import KernelDensity
 import numpy.typing as npt
-from domainadaptation.helper._coverage import common_coverage_of_mixed_rvs
 
 
 

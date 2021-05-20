@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.neighbors import KernelDensity
 import numpy.typing as npt 
 from typing import Union
-#from domainadaptation.helper._coverage import common_coverage_of_continuous_rvs
+
 
 
 class rv_continuous():

@@ -1,5 +1,8 @@
 from __future__ import annotations
-from domainadaptation.stats import rv_discrete, rv_continuous, rv_mixed
+
+from domainadaptation.stats.rv_discrete import rv_discrete
+from domainadaptation.stats.rv_continuous import rv_continuous
+from domainadaptation.stats.rv_mixed import rv_mixed
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import GridSearchCV

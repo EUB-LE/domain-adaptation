@@ -2,7 +2,7 @@ from __future__ import annotations
 import numpy as np
 from domainadaptation.measures import jsd, kld
 from numpy.typing import ArrayLike
-from domainadaptation.helper._coverage 
+
 
 # Insert new divergence measures here
 # TODO: Automatically detect divergence measures.

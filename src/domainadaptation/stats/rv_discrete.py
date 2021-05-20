@@ -1,7 +1,6 @@
 from __future__ import annotations
 import numpy as np
 import numpy.typing as npt
-from domainadaptation.helper._coverage import common_coverage_of_discrete_rvs
 
 
 

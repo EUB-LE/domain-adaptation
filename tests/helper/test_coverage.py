@@ -3,7 +3,7 @@ import unittest
 from domainadaptation.stats import rv_continuous, rv_discrete, rv_mixed
 from sklearn.neighbors import KernelDensity
 from domainadaptation.helper._coverage import _get_common_limits_of_continuous, common_coverage_of_continuous_rvs, common_coverage_of_discrete_rvs, common_coverage_of_mixed_rvs
-from domainadaptation.helper import rv_from_continuous, rv_from_discrete, rv_from_mixed
+from domainadaptation.stats._rv_parser import rv_from_continuous, rv_from_discrete, rv_from_mixed
 import numpy as np
 from numpy import random
 
@@ -23,8 +23,8 @@ class TestCoverage(unittest.TestCase):
         c1 = [(-2,2),(1,5)]
         c2 = [(-1,4),(-3,3)]
         
-        rv1 = rv_continuous(KernelDensity().fit([[0,1]]), c1)
-        rv2 = rv_continuous(KernelDensity().fit([[0,1]]), c2)
+        rv1 = rv_continuous(KernelDensity().fit([[0,1]]), (2,), c1)
+        rv2 = rv_continuous(KernelDensity().fit([[0,1]]), (2,), c2)
 
         c_is = _get_common_limits_of_continuous(rv1, rv2)
         c_target = [(-1,2),(1,3)]
@@ -35,8 +35,8 @@ class TestCoverage(unittest.TestCase):
         c1 = [(-2,2),(1,5)]
         c2 = [(-1,4),(-3,3)]
         
-        rv1 = rv_continuous(KernelDensity().fit([[0,1]]), c1)
-        rv2 = rv_continuous(KernelDensity().fit([[0,1]]), c2)
+        rv1 = rv_continuous(KernelDensity().fit([[0,1]]), (2,), c1)
+        rv2 = rv_continuous(KernelDensity().fit([[0,1]]), (2,), c2)
 
         mc_points = common_coverage_of_continuous_rvs(rv1, rv2, 1000)
         self.assertEqual(mc_points.shape[0], 1000)

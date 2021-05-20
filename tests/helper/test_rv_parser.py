@@ -2,7 +2,7 @@ from __future__ import annotations
 import unittest
 import numpy as np
 from numpy import random
-from domainadaptation.helper import rv_from_discrete, rv_from_continuous, rv_from_mixed
+from domainadaptation.stats._rv_parser import rv_from_continuous, rv_from_discrete, rv_from_mixed
 from domainadaptation.stats import rv_discrete, rv_continuous, rv_mixed
 
 class TestRVParsers(unittest.TestCase):
@@ -52,7 +52,7 @@ class TestRVParsers(unittest.TestCase):
         rv = rv_from_mixed(X, y)
         self.assertEqual(type(rv), rv_mixed)
         self.assertEqual(type(rv.rv1), rv_continuous)
-        self.assertEqual(type(rv.r2), rv_discrete)
+        self.assertEqual(type(rv.rv2), rv_discrete)
         self.assertGreater(rv.pdf([[0.5,0.5]], [1]), 0)
 
     def test_rv_from_data_and_rvs(self):
