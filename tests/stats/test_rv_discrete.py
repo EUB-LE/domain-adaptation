@@ -93,6 +93,28 @@ class TestRVDiscrete(unittest.TestCase):
         
         self.assertTrue(np.array_equal(score_is, score_target), f"P_is: {score_is} is not P_target: {score_target}.")
     
+    def test_common_coverage(self):
+        rv1 = rv_discrete([(0,),(1,),(2,)], pk=[0.3, 0.3, 0.4])
+        rv2 = rv_discrete([(0,),(1,),(4,)], pk=[0.2, 0.4, 0.4])
+
+        coverage_is = rv1._common_coverage(rv2)
+        coverage_reverse = rv2._common_coverage(rv1)
+        coverage_target = np.array([(0,),(1,)]).reshape(-1)
+
+        self.assertTrue(np.array_equal(coverage_is, coverage_target), f"covarage_is {coverage_is} not equal to coverage_target {coverage_target}.")
+        self.assertTrue(np.array_equal(coverage_is, coverage_reverse), f"covarage_is {coverage_is} not equal to coverage_target {coverage_reverse}.")
+
+    def test_divergence(self):
+        rv1 = rv_discrete([(0,),(1,),(2,)], pk=[0.3, 0.3, 0.4])
+        rv2 = rv_discrete([(0,),(1,),(4,)], pk=[0.2, 0.4, 0.4])
+        
+        pd_1 = rv1.score_samples([(0,), (1,)])
+        pd_2 = rv2.score_samples([(0,), (1,)])
+        divergence_target = rv1.divergence_from_distribution(pd_1, pd_2)
+        divergence_is = rv1.divergence(rv2)
+
+        self.assertEqual(divergence_is, divergence_target)
+    
 if __name__ == '__main__':
     unittest.main()
 

@@ -1,7 +1,6 @@
 import unittest
 import numpy as np
 from scipy.stats import entropy
-#from domainadaptation.measures import jsd
 
 class TestJSD(unittest.TestCase):
     

@@ -1,6 +1,6 @@
 from __future__ import annotations
 import numpy as np
-from numpy import number, random
+from numpy import random
 
 
 def generate_mc_points(limits:list[tuple[float, float]] = [(0,1)], eval_points_per_dim:int = 1000) -> np.ndarray:

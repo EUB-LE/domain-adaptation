@@ -3,10 +3,12 @@ import numpy as np
 from sklearn.neighbors import KernelDensity
 import numpy.typing as npt 
 from typing import Union
+from domainadaptation.helper import generate_mc_points
+from domainadaptation.stats.rv_base import rv_base
 
 
 
-class rv_continuous():
+class rv_continuous(rv_base):
     def __init__(self, kde:KernelDensity, shape:tuple, coverage:Union[list[tuple]] = None, name:str = None) -> None:
         self.kde = kde
         self.name = name
@@ -39,8 +41,32 @@ class rv_continuous():
         # check coverage
         # TODO: add sanity check for coverage
 
+    
+    def _get_common_limits_of_continuous(self, rv: rv_continuous):
+        c1 = np.array(self.coverage)
+        c2 = np.array(rv.coverage)
+
+        # Get for the highest minimum and the lowest maximum for every dimension to define the common coverage
+        mins = np.maximum(c1[:,0], c2[:,0])
+        maxs = np.minimum(c1[:,1], c2[:,1])
+
+        minsmaxs = np.vstack((mins,maxs)).T
+        limits = list(map(tuple, minsmaxs))
+
+        return limits
+    
+    
+    def _common_coverage(self, rv: rv_continuous, eval_pts:int=1000) -> np.ndarray: 
+        limits = self._get_common_limits_of_continuous(rv)
+        return generate_mc_points(limits, eval_pts)
+    
+    def divergence(self, rv: rv_continuous, div_type:str = "jsd") -> float:
+        common_coverage = self._common_coverage(rv)
+        pd_x = self.score_samples(common_coverage)
+        pd_y = rv.score_samples(common_coverage)
+
+        return self.divergence_from_distribution(pd_x, pd_y, div_type)
             
-       
 
     def pdf(self, X:npt.ArrayLike) -> np.ndarray:
         """Returns the probability density function at x.
@@ -54,7 +80,6 @@ class rv_continuous():
         score = self.kde.score_samples(X)
         return np.exp(score)
 
-    # implement abstract method(s)
     def score_samples(self, X:npt.ArrayLike) -> np.ndarray:
         return self.kde.score_samples(X)
 

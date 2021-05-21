@@ -4,10 +4,11 @@ from numpy.lib import Arrayterator
 from domainadaptation.stats import rv_continuous, rv_discrete
 from sklearn.neighbors import KernelDensity
 import numpy.typing as npt
+from domainadaptation.stats.rv_base import rv_base
 
 
 
-class rv_mixed():
+class rv_mixed(rv_base):
     def __init__(self, rv1: rv_continuous, rv2: rv_discrete, cond_kdes: dict = None, name:str = None) -> None:
         self.rv1 = rv1
         self.rv2 = rv2
@@ -74,4 +75,29 @@ class rv_mixed():
         
     def score_samples(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
         return np.log(self.pdf(X,y))
+    
+    def _common_coverage(self, rv: rv_mixed, eval_pts:int = 1000) -> tuple[np.ndarray, np.ndarray]: 
+        common_coverage_continuous = self.rv1._common_coverage(rv.rv1)
+        common_coverage_discrete = self.rv2._common_coverage(rv.rv2)
+    
+        X = None
+        y = []
+
+        for label in common_coverage_discrete:
+            y.append(np.repeat(label, common_coverage_continuous.shape[0]))
+            if X is None:
+                X = common_coverage_continuous
+            else:
+                X = np.concatenate((X,common_coverage_continuous))
+
+        y = np.array(y).reshape(-1,)
+
+        return (X, y)
+    
+    def divergence(self, rv:rv_mixed, div_type:str="jsd"): 
+        common_coverage = self._common_coverage(rv)
+        pd_x = self.score_samples(*common_coverage)
+        pd_y = rv.score_samples(*common_coverage)
+
+        return self.divergence_from_distribution(pd_x, pd_y, div_type)
 

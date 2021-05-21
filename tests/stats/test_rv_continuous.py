@@ -51,8 +51,6 @@ class TestRVContinuous(unittest.TestCase):
             rv = rv_continuous(self.kde, (2,), coverage=[(-1,+1), (-2,+2), (-3,+3)])
 
     
-            
-    
     def test_pdf_of_2d_array(self): 
         rv = rv_continuous(self.kde, (2,))
         X = [[0,0], [0,0]]
@@ -74,6 +72,45 @@ class TestRVContinuous(unittest.TestCase):
         P_target = np.log(np.array([self.p_00, self.p_00]))
         is_close = np.allclose(P_is, P_target, atol=0.2)
         self.assertTrue(is_close, f"P_is: {P_is} is not close enough to P_target: {P_target}.")
+
+    def test_common_limits(self):
+        c1 = [(-2,2),(1,5)]
+        c2 = [(-1,4),(-3,3)]
+        
+        rv1 = rv_continuous(KernelDensity().fit([[0,1]]), (2,), c1)
+        rv2 = rv_continuous(KernelDensity().fit([[0,1]]), (2,), c2)
+
+        c_is = rv1._get_common_limits_of_continuous(rv2)
+        c_reverse = rv2._get_common_limits_of_continuous(rv1)
+        c_target = [(-1,2),(1,3)]
+
+        self.assertListEqual(c_is, c_target)
+        self.assertListEqual(c_is, c_reverse)
+    
+    def test_common_coverage(self): 
+        c1 = [(-2,2),(1,5)]
+        c2 = [(-1,4),(-3,3)]
+        
+        rv1 = rv_continuous(KernelDensity().fit([[0,1]]), (2,), c1)
+        rv2 = rv_continuous(KernelDensity().fit([[0,1]]), (2,), c2)
+
+        mc_points = rv1._common_coverage(rv2, 1000)
+        self.assertEqual(mc_points.shape[0], 1000)
+        self.assertEqual(mc_points.shape[1], rv1.shape[0])
+        # TODO: actual check if the common coverage is the right values and not only the correct shape. 
+    
+    def test_divergence(self): 
+        c1 = [(-2,2),(1,5)]
+        c2 = [(-1,4),(-3,3)]
+        # c_target = [(-1,2),(1,3)]
+        
+        rv1 = rv_continuous(KernelDensity().fit([[-1,2]]), (2,), c1)
+        rv2 = rv_continuous(KernelDensity().fit([[1,3]]), (2,), c2)
+
+        divergence = rv1.divergence(rv2)
+        self.assertEqual(type(divergence), np.float64)
+        self.assertGreater(divergence, 0.0)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,10 +1,11 @@
 from __future__ import annotations
 import numpy as np
 import numpy.typing as npt
+from domainadaptation.stats.rv_base import rv_base
 
 
 
-class rv_discrete():
+class rv_discrete(rv_base):
     def __init__(self, xk:npt.ArrayLike, pk:npt.ArrayLike, name:str = None, badvalue:float = np.nan) -> None:
         
         self.badvalue = badvalue
@@ -47,6 +48,21 @@ class rv_discrete():
     
     def score_samples(self, X:npt.ArrayLike) -> np.ndarray:
         return np.log(self.pmf(X))
+
+    
+    def _common_coverage(self, rv:rv_discrete) -> np.ndarray:
+        xk1 = np.array(self.xk)
+        xk2 = np.array(rv.xk)
+
+        return np.intersect1d(xk1, xk2)
+    
+    def divergence(self, rv:rv_discrete, div_type:str="jsd") -> float:
+        common_coverage = self._common_coverage(rv)
+        pd_x = self.score_samples(common_coverage)
+        pd_y = rv.score_samples(common_coverage)
+
+        divergence = self.divergence_from_distribution(pd_x, pd_y, div_type)
+        return divergence
 
 
 
