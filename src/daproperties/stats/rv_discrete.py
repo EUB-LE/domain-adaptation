@@ -1,9 +1,10 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING
 import numpy as np
-import numpy.typing as npt
-from domainadaptation.stats.rv_base import rv_base
+from daproperties.stats.rv_base import rv_base
 
-
+if TYPE_CHECKING:
+    import numpy.typing as npt
 
 class rv_discrete(rv_base):
     def __init__(self, xk:npt.ArrayLike, pk:npt.ArrayLike, name:str = None, badvalue:float = np.nan) -> None:

@@ -1,8 +1,8 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING
 from abc import ABC, abstractmethod
-from domainadaptation.measures import *
+from daproperties.measures import *
 import numpy as np
-
 
 class rv_base(ABC):
 

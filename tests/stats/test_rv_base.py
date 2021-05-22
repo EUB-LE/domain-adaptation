@@ -1,6 +1,6 @@
 import unittest
 
-from domainadaptation.stats.rv_base import rv_base
+from daproperties.stats.rv_base import rv_base
 
 
 class TestRVBase(unittest.TestCase):

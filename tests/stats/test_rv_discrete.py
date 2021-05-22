@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from domainadaptation.stats import rv_discrete
+from daproperties.stats import rv_discrete
 
 
 
@@ -59,6 +59,7 @@ class TestRVDiscrete(unittest.TestCase):
         P_target = np.array([0.6, 0.6, 0.4, 0])
         
         self.assertTrue(np.array_equal(P_is, P_target), f"P_is: {P_is} is not P_target: {P_target}.")
+
     
     def test_pmf_array(self):
         xk = [(0,1),(1,0)]

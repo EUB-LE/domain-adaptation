@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from domainadaptation.stats import rv_continuous
+from daproperties.stats import rv_continuous
 from numpy import random
 from sklearn.neighbors import KernelDensity
 

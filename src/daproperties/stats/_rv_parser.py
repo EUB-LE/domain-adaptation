@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from domainadaptation.stats.rv_discrete import rv_discrete
-from domainadaptation.stats.rv_continuous import rv_continuous
-from domainadaptation.stats.rv_mixed import rv_mixed
+from daproperties.stats.rv_discrete import rv_discrete
+from daproperties.stats.rv_continuous import rv_continuous
+from daproperties.stats.rv_mixed import rv_mixed
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import GridSearchCV
@@ -13,7 +13,7 @@ def rv_from_discrete(x:np.ndarray, **kwargs) -> rv_discrete:
 
     df = pd.DataFrame(x)
     pmf = df.value_counts(ascending=True, normalize=True, sort=False)
-    xk = pmf.index.values
+    xk = list(pmf.index.values)
     pk = pmf.values
 
     return rv_discrete(xk = xk, pk = pk, **kwargs)

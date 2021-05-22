@@ -1,7 +1,10 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING
 import numpy as np
-import numpy.typing as npt
-from domainadaptation.measures import kld
+from daproperties.measures import kld
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
 
 def jsd(pd_x: npt.ArrayLike, pd_y:npt.ArrayLike) -> float:
     pd_x = np.array(pd_x)

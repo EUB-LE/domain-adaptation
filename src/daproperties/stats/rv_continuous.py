@@ -1,12 +1,13 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING
 import numpy as np
-from sklearn.neighbors import KernelDensity
-import numpy.typing as npt 
-from typing import Union
-from domainadaptation.helper import generate_mc_points
-from domainadaptation.stats.rv_base import rv_base
+from daproperties.helper import generate_mc_points
+from daproperties.stats.rv_base import rv_base
 
-
+if TYPE_CHECKING:
+    import numpy.typing as npt 
+    from typing import Union
+    from sklearn.neighbors import KernelDensity
 
 class rv_continuous(rv_base):
     def __init__(self, kde:KernelDensity, shape:tuple, coverage:Union[list[tuple]] = None, name:str = None) -> None:

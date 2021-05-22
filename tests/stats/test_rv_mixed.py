@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 from numpy import random
 from sklearn.neighbors import KernelDensity
-from domainadaptation.stats import rv_continuous, rv_discrete, rv_mixed
+from daproperties.stats import rv_continuous, rv_discrete, rv_mixed
 
 
 class TestRVMixed(unittest.TestCase):

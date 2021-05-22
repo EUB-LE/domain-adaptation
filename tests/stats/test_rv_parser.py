@@ -2,8 +2,8 @@ from __future__ import annotations
 import unittest
 import numpy as np
 from numpy import random
-from domainadaptation.stats._rv_parser import rv_from_continuous, rv_from_discrete, rv_from_mixed
-from domainadaptation.stats import rv_discrete, rv_continuous, rv_mixed
+from daproperties.stats._rv_parser import rv_from_continuous, rv_from_discrete, rv_from_mixed
+from daproperties.stats import rv_discrete, rv_continuous, rv_mixed
 
 class TestRVParsers(unittest.TestCase):
     
@@ -28,9 +28,8 @@ class TestRVParsers(unittest.TestCase):
         name_target = "discrete"
 
         self.assertEqual(type(rv), rv_discrete)
-        # xk fails bc of tuple handling, but is correct
-        #self.assertTrue(np.array_equal(xk_is, xk_target), f"xk_is {xk_is} is not xk_target {xk_target}.")
         self.assertTrue(np.array_equal(pk_is, pk_target), f"pk_is {pk_is} is not pk_target {pk_target}.")
+        self.assertListEqual(rv.xk, xk_target)
         self.assertEqual(rv.pmf(0), 0.6)
         self.assertEqual(name_is, name_target)
 

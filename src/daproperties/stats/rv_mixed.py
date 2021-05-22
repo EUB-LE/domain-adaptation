@@ -1,12 +1,12 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING
 import numpy as np
-from numpy.lib import Arrayterator
-from domainadaptation.stats import rv_continuous, rv_discrete
+from daproperties.stats import rv_continuous, rv_discrete
 from sklearn.neighbors import KernelDensity
-import numpy.typing as npt
-from domainadaptation.stats.rv_base import rv_base
+from daproperties.stats.rv_base import rv_base
 
-
+if TYPE_CHECKING:
+    import numpy.typing as npt
 
 class rv_mixed(rv_base):
     def __init__(self, rv1: rv_continuous, rv2: rv_discrete, cond_kdes: dict = None, name:str = None) -> None:
