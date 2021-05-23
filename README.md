@@ -3,11 +3,13 @@ The Python package da-properties provides useful tools for characterizing domain
 
 ## Installation with pip 
  
-Download a wheel (domain_adaptation_properties-X.X.X-py3-none-any.whl) from https://github.com/EUB-LE/domain-adaptation/releases/latest to your project root. Navigate to your project root and run:
+From https://github.com/EUB-LE/domain-adaptation/releases/latest select the right version, e.g. v0.0.3, and replace X.X.X in the command below with the version number. Then run:
 
 ```shell
-pip install domain_adaptation_properties-X.X.X-py3-none-any.whl
+pip install https://github.com/EUB-LE/domain-adaptation/releases/download/vX.X.X/domain_adaptation_properties-X.X.X-py3-none-any.whl
 ```
+
+Alternatively, install directly 
 
 ## Using the package 
 
