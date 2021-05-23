@@ -71,7 +71,7 @@ class rv_mixed(rv_base):
         p_x = self.rv1.pdf(x)
 
         p_y_given_x = p_x_and_y / p_x
-        return p_x_and_y
+        return p_y_given_x
         
     def score_samples(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
         return np.log(self.pdf(X,y))
