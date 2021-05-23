@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
 class rv_discrete(rv_base):
-    def __init__(self, xk:npt.ArrayLike, pk:npt.ArrayLike, name:str = None, badvalue:float = np.nan) -> None:
+    def __init__(self, xk:npt.ArrayLike, pk:npt.ArrayLike, name:str = None, badvalue:float = 0.0) -> None:
         
         self.badvalue = badvalue
         self.xk = xk
